@@ -6,6 +6,10 @@ import time
 from typing import List, Dict, Any
 from dotenv import load_dotenv
 
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+
 load_dotenv()
 
 from evals.schemas import Case, AgentOutput, EvalResult, CompareConfig
@@ -62,7 +66,7 @@ def run() -> int:
         json.dump({"baseline": baseline_results, "candidate": candidate_results}, f, indent=2)
 
     # prepare comparison
-    from .schemas import Score
+    from evals.schemas import Score
     baseline_scores = [Score(**r["score"]) if isinstance(r["score"], dict) else r["score"] for r in baseline_results]
     candidate_scores = [Score(**r["score"]) if isinstance(r["score"], dict) else r["score"] for r in candidate_results]
 
