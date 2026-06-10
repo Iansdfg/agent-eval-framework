@@ -25,7 +25,7 @@ jobs:
         run: pytest -q
       - name: Run eval runner
         env:
-          BASELINE_AGENT_ENABLED: ${{ vars.BASELINE_AGENT_ENABLED || 'true' }}
+          BASELINE_AGENT_ENABLED: ${{ vars.BASELINE_AGENT_ENABLED || 'false' }}
           CANDIDATE_AGENT_BASE_URL: ${{ secrets.CANDIDATE_AGENT_BASE_URL }}
           CANDIDATE_AGENT_API_KEY: ${{ secrets.CANDIDATE_AGENT_API_KEY }}
           CANDIDATE_AGENT_TIMEOUT_SECONDS: 60
