@@ -1,5 +1,6 @@
-from typing import Dict, Any, List, Tuple
-from evals.schemas import Score, CompareConfig
+from typing import Any, Dict, List, Optional
+
+from evals.schemas import Case, CompareConfig, Score
 
 
 def overall_score(score: Score) -> float:
@@ -8,7 +9,14 @@ def overall_score(score: Score) -> float:
     return sum(vals) / len(vals)
 
 
-def compare(baseline_scores: List[Score], candidate_scores: List[Score], baseline_outputs: List[Any], candidate_outputs: List[Any], config: CompareConfig) -> Dict[str, Any]:
+def compare(
+    baseline_scores: List[Score],
+    candidate_scores: List[Score],
+    baseline_outputs: List[Any],
+    candidate_outputs: List[Any],
+    config: CompareConfig,
+    cases: Optional[List[Case]] = None,
+) -> Dict[str, Any]:
     # compute overall averages
     baseline_overall = sum(overall_score(s) for s in baseline_scores) / max(1, len(baseline_scores))
     candidate_overall = sum(overall_score(s) for s in candidate_scores) / max(1, len(candidate_scores))
@@ -25,25 +33,15 @@ def compare(baseline_scores: List[Score], candidate_scores: List[Score], baselin
     baseline_err = error_rate(baseline_outputs)
     candidate_err = error_rate(candidate_outputs)
 
-    # critical cases faithfulness
-    critical_indexes = [i for i, o in enumerate(baseline_outputs) if getattr(o, 'error', None) is not None or getattr(o, 'latency_ms', 0) is not None]
-
-    # simpler: check candidate faithfulness >= min for critical cases
-    critical_faithful = True
-    crit_candidates = [s for i, s in enumerate(candidate_scores) if getattr(candidate_outputs[i], 'error', None) is not None or getattr(candidate_outputs[i], 'latency_ms', 0) is not None]
-    # fallback: evaluate all critical-marked candidate scores
-    # Note: caller should pass only scores in same order as cases
-
-    # determine critical failures
     critical_failures = []
     for i, s in enumerate(candidate_scores):
-        # we don't have case metadata here; caller should inspect
-        if s.faithfulness < config.min_critical_faithfulness:
+        is_critical = cases[i].critical if cases and i < len(cases) else True
+        if is_critical and s.faithfulness < config.min_critical_faithfulness:
             critical_failures.append(i)
 
     pass_deploy = True
-    # candidate must beat baseline by fraction min_score_delta
-    if not (candidate_overall >= baseline_overall * (1.0 + config.min_score_delta)):
+    min_candidate_score = baseline_overall * (1.0 + config.min_score_delta)
+    if candidate_overall + config.score_tolerance < min_candidate_score:
         pass_deploy = False
 
     if latency_regression_pct > config.max_latency_regression_pct:

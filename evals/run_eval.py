@@ -39,11 +39,14 @@ def load_cases(path: str) -> List[Case]:
 
 def run() -> int:
     cases = load_cases(CASES_PATH)
+    total_cases = len(cases)
 
     baseline_results = []
     candidate_results = []
 
-    for case in cases:
+    for index, case in enumerate(cases, start=1):
+        print(f"[{index}/{total_cases}] Running {case.case_id} ({case.category}): {case.query}")
+
         start = time.time()
         b_out = run_baseline(case.query, case.dict())
         b_out_obj = AgentOutput(**b_out)
@@ -56,6 +59,28 @@ def run() -> int:
 
         b_score = judge(case, b_out_obj, use_llm=False, baseline_output=None)
         c_score = judge(case, c_out_obj, use_llm=False, baseline_output=b_out_obj)
+        b_overall = (
+            b_score.correctness
+            + b_score.faithfulness
+            + b_score.relevance
+            + b_score.format_correctness
+            + b_score.tool_use_accuracy
+        ) / 5.0
+        c_overall = (
+            c_score.correctness
+            + c_score.faithfulness
+            + c_score.relevance
+            + c_score.format_correctness
+            + c_score.tool_use_accuracy
+        ) / 5.0
+
+        print(
+            f"[{index}/{total_cases}] Completed {case.case_id}: "
+            f"baseline={b_overall:.2f} ({b_out_obj.latency_ms}ms"
+            f"{', error' if b_out_obj.error else ''}), "
+            f"candidate={c_overall:.2f} ({c_out_obj.latency_ms}ms"
+            f"{', error' if c_out_obj.error else ''})"
+        )
 
         baseline_results.append({"case_id": case.case_id, "case": case.dict(), "output": b_out_obj.dict(), "score": b_score.dict()})
         candidate_results.append({"case_id": case.case_id, "case": case.dict(), "output": c_out_obj.dict(), "score": c_score.dict()})
@@ -82,7 +107,7 @@ def run() -> int:
             setattr(o, k, v)
 
     cfg = CompareConfig()
-    summary = compare(baseline_scores, candidate_scores, baseline_outputs, candidate_outputs, cfg)
+    summary = compare(baseline_scores, candidate_scores, baseline_outputs, candidate_outputs, cfg, cases)
 
     summary_path = os.path.join(OUTPUT_DIR, "eval_summary.json")
     with open(summary_path, "w", encoding="utf-8") as f:

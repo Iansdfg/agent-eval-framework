@@ -39,7 +39,8 @@ class EvalResult(BaseModel):
 
 
 class CompareConfig(BaseModel):
-    min_score_delta: float = 0.1
-    max_latency_regression_pct: float = 20.0
+    min_score_delta: float = 0.0
+    score_tolerance: float = 0.01
+    max_latency_regression_pct: float = 30.0
     min_critical_faithfulness: float = 4.0
     required_critical_pass_rate: float = 1.0

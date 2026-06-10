@@ -82,13 +82,37 @@ pytest
 python evals/run_eval.py
 ```
 
+To compare two deployed agents, point the baseline at the current production/V1 agent
+and the candidate at the new agent:
+
+```bash
+export BASELINE_AGENT_BASE_URL="http://current-production-agent"
+export CANDIDATE_AGENT_BASE_URL="http://new-candidate-agent"
+python evals/run_eval.py
+```
+
+For a local FastAPI agent, use the API base URL, not the Swagger docs URL:
+
+```bash
+export BASELINE_AGENT_BASE_URL="http://127.0.0.1:8000"
+export CANDIDATE_AGENT_BASE_URL="http://127.0.0.1:8000"
+python evals/run_eval.py
+```
+
+The docs page `http://127.0.0.1:8000/docs#/default/chat_chat_post`
+describes the endpoint that the eval calls as `POST /chat`.
+
+If the baseline URL is not set, `app/baseline_agent.py` uses the default agent
+URL configured in that file.
+
 ## CI/CD integration
 
 The workflow in `.github/workflows/eval-gate.yml` runs on `pull_request` and `push` to `main`. It installs dependencies, runs tests, executes the eval runner, and uploads eval artifacts.
 
 ## Extending the framework
 
-- Replace `app/baseline_agent.py` and `app/candidate_agent.py` with real agent service calls.
+- Keep `app/baseline_agent.py` pointed at the latest pushed production/V1 agent.
+- Point `app/candidate_agent.py` at the new agent version being evaluated.
 - Enhance `evals/judge.py` with a real LLM judge or stronger deterministic scoring.
 - Add Postgres metadata persistence and S3 artifact storage.
 - Expand the eval dataset to cover additional categories and edge cases.

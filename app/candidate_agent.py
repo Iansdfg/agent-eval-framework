@@ -1,57 +1,14 @@
 import os
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import httpx
 
+from app.agent_adapter import normalize_retrieved_context, normalize_tool_trace
 
-DEFAULT_BASE_URL = "http://ai-agent-platform-alb-1032596770.us-east-1.elb.amazonaws.com"
+
+DEFAULT_BASE_URL = "http://127.0.0.1:8000"
 TIMEOUT_SECONDS = float(os.getenv("CANDIDATE_AGENT_TIMEOUT_SECONDS", "60"))
-
-
-def _stringify_trace_items(items: Any) -> List[str]:
-    if not isinstance(items, list):
-        return []
-
-    values: List[str] = []
-    for item in items:
-        if isinstance(item, str):
-            values.append(item)
-        elif isinstance(item, dict):
-            value = (
-                item.get("tool_name")
-                or item.get("name")
-                or item.get("tool")
-                or item.get("id")
-                or str(item)
-            )
-            values.append(str(value))
-        else:
-            values.append(str(item))
-    return values
-
-
-def _stringify_citations(items: Any) -> List[str]:
-    if not isinstance(items, list):
-        return []
-
-    values: List[str] = []
-    for item in items:
-        if isinstance(item, str):
-            values.append(item)
-        elif isinstance(item, dict):
-            value = (
-                item.get("source_id")
-                or item.get("source")
-                or item.get("document_id")
-                or item.get("id")
-                or item.get("url")
-                or str(item)
-            )
-            values.append(str(value))
-        else:
-            values.append(str(item))
-    return values
 
 
 def run_agent(query: str, case: Dict[str, Any]) -> Dict[str, Any]:
@@ -78,8 +35,8 @@ def run_agent(query: str, case: Dict[str, Any]) -> Dict[str, Any]:
             "input": metadata.get("input_tokens", 0),
             "output": metadata.get("output_tokens", 0),
         }
-        tool_trace = _stringify_trace_items(payload.get("tool_trace", []))
-        retrieved_context = _stringify_citations(payload.get("citations", []))
+        tool_trace = normalize_tool_trace(payload.get("tool_trace", []))
+        retrieved_context = normalize_retrieved_context(payload.get("citations", []))
         error = None
     except Exception as exc:
         answer = ""
