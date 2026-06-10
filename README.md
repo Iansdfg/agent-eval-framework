@@ -105,9 +105,21 @@ describes the endpoint that the eval calls as `POST /chat`.
 If the baseline URL is not set, `app/baseline_agent.py` uses the default agent
 URL configured in that file.
 
+To skip the baseline agent and gate only on candidate metrics, disable baseline
+execution:
+
+```bash
+export BASELINE_AGENT_ENABLED=false
+python evals/run_eval.py
+```
+
+When baseline is disabled, the eval checks candidate overall score, candidate
+error rate, and critical-case faithfulness without comparing against baseline
+latency or score.
+
 ## CI/CD integration
 
-The workflow in `.github/workflows/eval-gate.yml` runs on `pull_request` and `push` to `main`. It installs dependencies, runs tests, executes the eval runner, and uploads eval artifacts.
+The workflow in `.github/workflows/eval-gate.yml` runs on `pull_request` and `push` to `main`. It installs dependencies, runs tests, executes the eval runner, and uploads eval artifacts. Set the repository variable `BASELINE_AGENT_ENABLED=false` to opt out of baseline execution in CI.
 
 ## Extending the framework
 

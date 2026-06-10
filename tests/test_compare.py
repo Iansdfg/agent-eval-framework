@@ -48,3 +48,17 @@ def test_compare_uses_score_tolerance():
     res = compare(baseline_scores, candidate_scores, baseline_outputs, candidate_outputs, cfg)
 
     assert res["pass"] is True
+
+
+def test_compare_can_skip_baseline():
+    cfg = CompareConfig(min_candidate_overall=3.0, max_candidate_error_rate=0.0)
+    candidate_scores = [make_score(correctness=3.0, faithfulness=5.0)]
+    candidate_outputs = [type("O", (), {"latency_ms": 10, "error": None})()]
+
+    res = compare([], candidate_scores, [], candidate_outputs, cfg, baseline_enabled=False)
+
+    assert res["baseline_enabled"] is False
+    assert res["baseline_overall"] is None
+    assert res["latency_regression_pct"] is None
+    assert res["baseline_error_rate"] is None
+    assert res["pass"] is True

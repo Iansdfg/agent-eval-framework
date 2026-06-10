@@ -11,9 +11,13 @@ DEFAULT_BASE_URL = "http://127.0.0.1:8000"
 TIMEOUT_SECONDS = float(os.getenv("BASELINE_AGENT_TIMEOUT_SECONDS", "60"))
 
 
+def agent_url() -> str:
+    return os.getenv("BASELINE_AGENT_BASE_URL", DEFAULT_BASE_URL).rstrip("/")
+
+
 def run_agent(query: str, case: Dict[str, Any]) -> Dict[str, Any]:
     start = time.time()
-    base_url = os.getenv("BASELINE_AGENT_BASE_URL", DEFAULT_BASE_URL).rstrip("/")
+    base_url = agent_url()
     api_key = os.getenv("BASELINE_AGENT_API_KEY")
 
     headers = {}
